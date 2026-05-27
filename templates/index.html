@@ -108,14 +108,10 @@
 
     footer {
       background: #0f172a;
-      padding: 40px 5% 20px;
+      padding: 50px 5% 30px;
       margin-top: 80px;
       text-align: center;
       border-top: 1px solid rgba(99, 102, 241, 0.2);
-    }
-
-    .footer-links {
-      margin: 20px 0;
     }
 
     .footer-links a {
@@ -154,8 +150,57 @@
   </div>
 
   <div class="tools-grid">
-    <!-- Tus herramientas aquí (QR, Password, Contador, etc.) -->
-    <!-- ... (mantén el mismo código de herramientas que tenías) ... -->
+    <!-- 1. QR -->
+    <div class="tool-card">
+      <h3>🔲 Generador de QR</h3>
+      <input type="text" id="qr-input" class="input-field" placeholder="Texto o enlace...">
+      <button onclick="generateQR()">Generar Código QR</button>
+      <div id="qr-result" class="result"></div>
+    </div>
+
+    <!-- 2. Password -->
+    <div class="tool-card">
+      <h3>🔑 Generador de Contraseñas</h3>
+      <input type="number" id="pass-length" class="input-field" value="18" min="8" max="64">
+      <button onclick="generatePassword()">Generar Contraseña Segura</button>
+      <div id="password-result" class="result"></div>
+    </div>
+
+    <!-- 3. Contador de Palabras -->
+    <div class="tool-card">
+      <h3>📝 Contador de Palabras</h3>
+      <textarea id="word-count-input" class="input-field" rows="5" placeholder="Escribe tu texto aquí..."></textarea>
+      <button onclick="countWords()">Contar Palabras y Caracteres</button>
+      <div id="word-count-result" class="result"></div>
+    </div>
+
+    <!-- 4. Convertidor de Texto -->
+    <div class="tool-card">
+      <h3>🔠 Convertidor de Texto</h3>
+      <textarea id="text-convert-input" class="input-field" rows="4" placeholder="Escribe tu texto..."></textarea>
+      <div style="display:flex; gap:8px;">
+        <button onclick="convertText('upper')">MAYÚSCULAS</button>
+        <button onclick="convertText('lower')">minúsculas</button>
+        <button onclick="convertText('capitalize')">Capitalizar</button>
+      </div>
+      <div id="text-convert-result" class="result"></div>
+    </div>
+
+    <!-- 5. Generador de Nombres -->
+    <div class="tool-card">
+      <h3>👤 Generador de Nombres</h3>
+      <button onclick="generateName()">Generar Nombre Aleatorio</button>
+      <div id="name-result" class="result"></div>
+    </div>
+
+    <!-- 6. Calculadora IMC -->
+    <div class="tool-card">
+      <h3>⚖️ Calculadora de IMC</h3>
+      <input type="number" id="weight" class="input-field" placeholder="Peso en kg (ej: 70)">
+      <input type="number" id="height" class="input-field" placeholder="Altura en cm (ej: 170)">
+      <button onclick="calculateIMC()">Calcular IMC</button>
+      <div id="imc-result" class="result"></div>
+    </div>
   </div>
 
   <!-- FOOTER -->
@@ -165,16 +210,86 @@
       <a href="/terms">Términos y Condiciones</a>
       <a href="/about">Sobre Nosotros</a>
     </div>
-    <p style="color: #64748b; font-size: 0.9rem;">
-      © 2026 Toolify. Todas las herramientas son gratuitas.
+    <p style="color: #64748b; font-size: 0.9rem; margin-top: 20px;">
+      © 2026 Toolify - Todas las herramientas son gratuitas
     </p>
   </footer>
 
   <div class="toast" id="toast">✅ Copiado al portapapeles</div>
 
   <script>
-    // Tus funciones de herramientas aquí (generateQR, generatePassword, etc.)
-    // ... (mantén todo el script anterior)
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 2500);
+      });
+    }
+
+    async function generateQR() {
+      const text = document.getElementById('qr-input').value.trim();
+      if (!text) return alert("Ingresa texto o enlace");
+      
+      const res = await fetch('/api/qr', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text})
+      });
+      const data = await res.json();
+      document.getElementById('qr-result').innerHTML = 
+        `<img src="${data.image}" style="max-width:240px; border-radius:12px;"><br>
+         <button class="copy-btn" onclick="copyToClipboard('${text}')">📋 Copiar Enlace</button>`;
+    }
+
+    async function generatePassword() {
+      const length = document.getElementById('pass-length').value;
+      const res = await fetch('/api/password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({length: parseInt(length)})
+      });
+      const data = await res.json();
+      document.getElementById('password-result').innerHTML = 
+        `<strong style="font-size:1.3rem;">${data.password}</strong><br>
+         <button class="copy-btn" onclick="copyToClipboard('${data.password}')">📋 Copiar</button>`;
+    }
+
+    function countWords() {
+      const text = document.getElementById('word-count-input').value.trim();
+      const words = text.split(/\s+/).filter(w => w.length > 0).length;
+      const chars = text.length;
+      document.getElementById('word-count-result').innerHTML = 
+        `<strong>${words} palabras</strong> | ${chars} caracteres`;
+    }
+
+    function convertText(type) {
+      const text = document.getElementById('text-convert-input').value;
+      let result = '';
+      if (type === 'upper') result = text.toUpperCase();
+      else if (type === 'lower') result = text.toLowerCase();
+      else if (type === 'capitalize') result = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+      
+      document.getElementById('text-convert-result').innerHTML = 
+        `<strong>${result}</strong><br><button class="copy-btn" onclick="copyToClipboard('${result}')">📋 Copiar</button>`;
+    }
+
+    function generateName() {
+      const names = ["Lucas", "Sofía", "Mateo", "Valentina", "Diego", "Camila", "Alejandro", "Isabella", "Martín", "Emma"];
+      const surnames = ["García", "Rodríguez", "López", "Martínez", "González", "Pérez", "Sánchez", "Ramírez"];
+      const fullName = names[Math.floor(Math.random()*names.length)] + " " + surnames[Math.floor(Math.random()*surnames.length)];
+      document.getElementById('name-result').innerHTML = `<strong>${fullName}</strong>`;
+    }
+
+    function calculateIMC() {
+      const weight = parseFloat(document.getElementById('weight').value);
+      const height = parseFloat(document.getElementById('height').value) / 100;
+      if (!weight || !height) return alert("Ingresa peso y altura");
+      
+      const imc = (weight / (height * height)).toFixed(2);
+      let status = imc < 18.5 ? "Bajo peso" : imc < 25 ? "Normal" : imc < 30 ? "Sobrepeso" : "Obesidad";
+      
+      document.getElementById('imc-result').innerHTML = `<strong>IMC: ${imc}</strong><br><span>${status}</span>`;
+    }
   </script>
 </body>
 </html>
