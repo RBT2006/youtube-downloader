@@ -1,102 +1,64 @@
-from flask import Flask, render_template, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, render_template
 import yt_dlp
 import os
 import uuid
-import glob
 
 app = Flask(__name__)
 
-DOWNLOAD_FOLDER = "downloads"
-FFMPEG_PATH = os.path.join("ffmpeg", "bin")
+# Configuración para Render
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
+DOWNLOAD_FOLDER = "downloads"
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
-
-def clean_old_files():
-    files = glob.glob(os.path.join(DOWNLOAD_FOLDER, "*"))
-
-    for file in files:
-        try:
-            os.remove(file)
-        except:
-            pass
-
-
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-
-@app.route("/download", methods=["POST"])
+@app.route('/download', methods=['POST'])
 def download():
-    data = request.get_json()
+    url = request.json.get('url')
+    format_type = request.json.get('format', 'video')
 
-    url = data.get("url")
-    download_type = data.get("type")
-
-    if not url:
-        return jsonify({"error": "Debes introducir una URL."}), 400
+    if not url or ('youtube.com' not in url and 'youtu.be' not in url):
+        return jsonify({"error": "URL de YouTube inválida"}), 400
 
     try:
-        clean_old_files()
-
         unique_id = str(uuid.uuid4())
-        output_template = os.path.join(DOWNLOAD_FOLDER, f"{unique_id}.%(ext)s")
+        output_path = f"{DOWNLOAD_FOLDER}/{unique_id}"
 
-        if download_type == "video":
-            ydl_opts = {
-                "format": "bestvideo+bestaudio/best",
-                "merge_output_format": "mp4",
-                "outtmpl": output_template,
-                "noplaylist": True,
-                "quiet": True,
-                "ffmpeg_location": FFMPEG_PATH,
-            }
+        ydl_opts = {
+            'outtmpl': f'{output_path}.%(ext)s',
+            'quiet': True,
+        }
 
-        elif download_type == "audio":
-            ydl_opts = {
-                "format": "bestaudio/best",
-                "outtmpl": output_template,
-                "noplaylist": True,
-                "quiet": True,
-                "ffmpeg_location": FFMPEG_PATH,
-                "postprocessors": [{
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "320",
+        if format_type == 'audio':
+            ydl_opts.update({
+                'format': 'bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
                 }],
-            }
-
+            })
         else:
-            return jsonify({"error": "Tipo de descarga inválido."}), 400
+            ydl_opts.update({
+                'format': 'best[height<=720]',
+            })
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            title = info.get("title", "download")
+            filename = ydl.prepare_filename(info)
+            
+            if format_type == 'audio':
+                filename = filename.replace('.webm', '.mp3').replace('.mp4', '.mp3')
 
-        downloaded_files = glob.glob(os.path.join(DOWNLOAD_FOLDER, f"{unique_id}.*"))
-
-        if not downloaded_files:
-            return jsonify({"error": "No se pudo descargar el archivo."}), 500
-
-        final_file = downloaded_files[0]
-        extension = os.path.splitext(final_file)[1]
-
-        safe_title = "".join(c for c in title if c.isalnum() or c in " -_").rstrip()
-        final_name = f"{safe_title}{extension}"
-
-        return send_file(
-            final_file,
-            as_attachment=True,
-            download_name=final_name
-        )
-
-    except yt_dlp.utils.DownloadError:
-        return jsonify({"error": "Video no disponible o URL inválida."}), 400
+        return send_file(filename, as_attachment=True)
 
     except Exception as e:
-        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
