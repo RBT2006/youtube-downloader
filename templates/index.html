@@ -3,116 +3,146 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YT Downloader - Gratis y Rápido</title>
+  <title>Herramientas Online - Gratis</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      background: linear-gradient(135deg, #0f172a, #1e40af);
       color: white;
       margin: 0;
       padding: 20px;
-      min-height: 100vh;
     }
     .container {
-      max-width: 700px;
-      margin: 40px auto;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 24px;
-      padding: 40px;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-      border: 1px solid rgba(59,130,246,0.3);
+      max-width: 1100px;
+      margin: 0 auto;
     }
-    h1 { text-align: center; font-size: 2.8rem; margin: 0 0 8px 0; }
-    p { text-align: center; color: #94a3b8; margin-bottom: 30px; }
-    input {
+    h1 {
+      text-align: center;
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 40px;
+    }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .tool-card {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 20px;
+      padding: 25px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .tool-card h3 {
+      margin: 0 0 15px 0;
+      color: #60a5fa;
+    }
+    input, textarea, select {
       width: 100%;
-      padding: 18px;
-      font-size: 1.1rem;
+      padding: 12px;
+      border-radius: 10px;
       border: none;
-      border-radius: 12px;
       background: #1e2937;
       color: white;
-      margin-bottom: 20px;
-    }
-    .options {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      margin: 10px 0;
     }
     button {
-      padding: 16px 28px;
-      font-size: 1.05rem;
-      font-weight: 600;
+      padding: 12px 25px;
+      background: #3b82f6;
+      color: white;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: 0.3s;
+      font-weight: 600;
     }
-    .btn-video { background: #3b82f6; }
-    .btn-audio { background: #22c55e; }
-    button:hover { transform: translateY(-4px); }
-    #status { margin-top: 20px; text-align: center; min-height: 30px; font-weight: 500; }
-    .spinner { display: inline-block; animation: spin 1s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    button:hover {
+      background: #2563eb;
+    }
+    #result {
+      margin-top: 15px;
+      padding: 15px;
+      background: #1e2937;
+      border-radius: 10px;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎥 YT Downloader</h1>
-    <p>Descarga videos y audios de YouTube en alta calidad</p>
+    <h1>🛠️ Herramientas Online</h1>
+    <p class="subtitle">Utilidades gratuitas y rápidas</p>
 
-    <input type="text" id="url" placeholder="Pega el enlace de YouTube aquí...">
+    <div class="tools-grid">
+      <!-- QR Generator -->
+      <div class="tool-card">
+        <h3>🔲 Generador de QR</h3>
+        <input type="text" id="qr-text" placeholder="Texto o enlace">
+        <button onclick="generateQR()">Generar QR</button>
+        <div id="qr-result"></div>
+      </div>
 
-    <div class="options">
-      <button class="btn-video" onclick="download('video')">📹 Video MP4</button>
-      <button class="btn-audio" onclick="download('audio')">🎵 Audio MP3</button>
+      <!-- Password Generator -->
+      <div class="tool-card">
+        <h3>🔑 Generador de Contraseñas</h3>
+        <input type="number" id="pass-length" value="16" min="8" max="64">
+        <button onclick="generatePassword()">Generar Contraseña</button>
+        <div id="password-result" style="font-family: monospace; font-size: 1.2rem;"></div>
+      </div>
+
+      <!-- Base64 -->
+      <div class="tool-card">
+        <h3>🔄 Base64 Encoder/Decoder</h3>
+        <textarea id="base64-text" rows="3" placeholder="Texto aquí..."></textarea>
+        <button onclick="base64Action('encode')">Codificar</button>
+        <button onclick="base64Action('decode')">Decodificar</button>
+        <div id="base64-result"></div>
+      </div>
     </div>
-
-    <button onclick="clearAll()" style="background:#ef4444; width:100%; padding:16px;">🗑️ Limpiar</button>
-
-    <div id="status"></div>
   </div>
 
   <script>
-    async function download(type) {
-      const url = document.getElementById('url').value.trim();
-      const status = document.getElementById('status');
+    async function generateQR() {
+      const text = document.getElementById('qr-text').value;
+      const result = document.getElementById('qr-result');
+      if (!text) return alert("Ingresa texto");
 
-      if (!url) {
-        status.innerHTML = '<span style="color:red">❌ Ingresa un enlace</span>';
-        return;
-      }
-
-      status.innerHTML = '<span style="color:#eab308">⏳ Procesando... <span class="spinner">⟳</span></span>';
-
-      try {
-        const res = await fetch('/download', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({url, format: type})
-        });
-
-        if (res.ok) {
-          const blob = await res.blob();
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = type === 'audio' ? 'audio.mp3' : 'video.mp4';
-          a.click();
-          status.innerHTML = '<span style="color:#22c55e">✅ ¡Descarga iniciada!</span>';
-        } else {
-          const data = await res.json();
-          status.innerHTML = `<span style="color:red">❌ ${data.error}</span>`;
-        }
-      } catch (err) {
-        status.innerHTML = '<span style="color:red">❌ Error de conexión</span>';
+      const res = await fetch('/api/qr', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text})
+      });
+      const data = await res.json();
+      if (data.image) {
+        result.innerHTML = `<img src="${data.image}" style="max-width:100%; margin-top:15px;">`;
       }
     }
 
-    function clearAll() {
-      document.getElementById('url').value = '';
-      document.getElementById('status').innerHTML = '';
+    async function generatePassword() {
+      const length = document.getElementById('pass-length').value;
+      const res = await fetch('/api/password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({length: parseInt(length)})
+      });
+      const data = await res.json();
+      document.getElementById('password-result').innerHTML = 
+        `<strong>${data.password}</strong>`;
+    }
+
+    async function base64Action(action) {
+      const text = document.getElementById('base64-text').value;
+      const res = await fetch('/api/base64', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text, action})
+      });
+      const data = await res.json();
+      document.getElementById('base64-result').innerHTML = `<strong>${data.result || data.error}</strong>`;
     }
   </script>
 </body>
