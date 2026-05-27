@@ -1,21 +1,18 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import os
 import uuid
+import random
+import string
 import base64
 import qrcode
 from io import BytesIO
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# Herramientas disponibles
-TOOLS = {
-    "qr": "Generador de QR",
-    "password": "Generador de Contraseñas",
-    "base64": "Codificador Base64",
-    "text": "Convertidor de Texto",
-    "color": "Selector de Colores"
-}
+DOWNLOAD_FOLDER = "downloads"
+os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
+# ==================== RUTA PRINCIPAL ====================
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -38,21 +35,13 @@ def generate_qr():
     
     return jsonify({"image": f"data:image/png;base64,{img_str}"})
 
-# ==================== PASSWORD ====================
+# ==================== GENERADOR DE CONTRASEÑAS ====================
 @app.route('/api/password', methods=['POST'])
 def generate_password():
-    import random
-    import string
-    
     length = int(request.json.get('length', 16))
-    use_numbers = request.json.get('numbers', True)
-    use_symbols = request.json.get('symbols', True)
     
-    characters = string.ascii_letters
-    if use_numbers:
-        characters += string.digits
-    if use_symbols:
-        characters += "!@#$%^&*()_+-=[]{}|;:,.<>?"
+    characters = string.ascii_letters + string.digits
+    characters += "!@#$%^&*()_+-=[]{}|;:,.<>?"
     
     password = ''.join(random.choice(characters) for _ in range(length))
     return jsonify({"password": password})
@@ -67,26 +56,31 @@ def base64_convert():
         if action == 'encode':
             result = base64.b64encode(text.encode('utf-8')).decode('utf-8')
         else:
-            result = base64.b64decode(text).decode('utf-8')
+            result = base64.b64decode(text.encode('utf-8')).decode('utf-8')
         return jsonify({"result": result})
     except:
         return jsonify({"error": "Error en la conversión"}), 400
 
-@app.route('/api/text', methods=['POST'])
-def text_convert():
-    text = request.json.get('text', '')
-    action = request.json.get('action', 'upper')
-    
-    if action == 'upper':
-        result = text.upper()
-    elif action == 'lower':
-        result = text.lower()
-    elif action == 'capitalize':
-        result = text.capitalize()
-    else:
-        result = text
-    return jsonify({"result": result})
+# ==================== NUEVAS HERRAMIENTAS ====================
 
+# Contador de palabras (no necesita backend, pero lo dejamos por si acaso)
+@app.route('/api/wordcount', methods=['POST'])
+def word_count():
+    text = request.json.get('text', '')
+    words = len(text.split())
+    chars = len(text)
+    return jsonify({"words": words, "characters": chars})
+
+# Generador de Nombres
+@app.route('/api/randomname', methods=['GET'])
+def random_name():
+    first_names = ["Lucas", "Sofía", "Mateo", "Valentina", "Diego", "Camila", "Alejandro", "Isabella", "Martín", "Emma", "Nicolás", "Olivia"]
+    last_names = ["García", "Rodríguez", "López", "Martínez", "González", "Pérez", "Sánchez", "Ramírez", "Torres", "Flores"]
+    
+    full_name = random.choice(first_names) + " " + random.choice(last_names)
+    return jsonify({"name": full_name})
+
+# ==================== INICIO ====================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
