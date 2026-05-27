@@ -30,7 +30,11 @@
       border-bottom: 1px solid rgba(99, 102, 241, 0.2);
     }
 
-    .logo { color: #6366f1; font-size: 1.8rem; font-weight: 700; }
+    .logo { 
+      color: #6366f1; 
+      font-size: 1.8rem; 
+      font-weight: 700; 
+    }
 
     .hero {
       text-align: center;
@@ -120,9 +124,6 @@
 <body>
   <nav class="navbar">
     <div class="logo">Toolify</div>
-    <button class="btn-login" onclick="alert('Login con Google - Próximamente')">
-      <i class="fab fa-google"></i> Iniciar Sesión
-    </button>
   </nav>
 
   <div class="hero">
@@ -195,20 +196,42 @@
       });
     }
 
-    // Funciones existentes (QR, Password, Base64) + nuevas
-    async function generateQR() { /* ... */ }
-    async function generatePassword() { /* ... */ }
+    async function generateQR() {
+      const text = document.getElementById('qr-input').value.trim();
+      if (!text) return alert("Ingresa texto o enlace");
+      
+      const res = await fetch('/api/qr', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text})
+      });
+      const data = await res.json();
+      document.getElementById('qr-result').innerHTML = 
+        `<img src="${data.image}" style="max-width:240px; border-radius:12px;"><br>
+         <button class="copy-btn" onclick="copyToClipboard('${text}')">📋 Copiar Enlace</button>`;
+    }
 
-    // Nueva: Contador de palabras
+    async function generatePassword() {
+      const length = document.getElementById('pass-length').value;
+      const res = await fetch('/api/password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({length: parseInt(length)})
+      });
+      const data = await res.json();
+      document.getElementById('password-result').innerHTML = 
+        `<strong style="font-size:1.3rem;">${data.password}</strong><br>
+         <button class="copy-btn" onclick="copyToClipboard('${data.password}')">📋 Copiar</button>`;
+    }
+
     function countWords() {
       const text = document.getElementById('word-count-input').value.trim();
-      const words = text.split(/\s+/).filter(word => word.length > 0).length;
+      const words = text.split(/\s+/).filter(w => w.length > 0).length;
       const chars = text.length;
       document.getElementById('word-count-result').innerHTML = 
         `<strong>${words} palabras</strong> | ${chars} caracteres`;
     }
 
-    // Nueva: Convertidor de texto
     function convertText(type) {
       const text = document.getElementById('text-convert-input').value;
       let result = '';
@@ -220,7 +243,6 @@
         `<strong>${result}</strong><br><button class="copy-btn" onclick="copyToClipboard('${result}')">📋 Copiar</button>`;
     }
 
-    // Nueva: Generador de Nombres
     function generateName() {
       const names = ["Lucas", "Sofía", "Mateo", "Valentina", "Diego", "Camila", "Alejandro", "Isabella", "Martín", "Emma"];
       const surnames = ["García", "Rodríguez", "López", "Martínez", "González", "Pérez", "Sánchez", "Ramírez"];
@@ -228,21 +250,15 @@
       document.getElementById('name-result').innerHTML = `<strong>${fullName}</strong>`;
     }
 
-    // Nueva: Calculadora IMC
     function calculateIMC() {
       const weight = parseFloat(document.getElementById('weight').value);
       const height = parseFloat(document.getElementById('height').value) / 100;
       if (!weight || !height) return alert("Ingresa peso y altura");
       
       const imc = (weight / (height * height)).toFixed(2);
-      let status = '';
-      if (imc < 18.5) status = "Bajo peso";
-      else if (imc < 25) status = "Peso normal";
-      else if (imc < 30) status = "Sobrepeso";
-      else status = "Obesidad";
-
-      document.getElementById('imc-result').innerHTML = 
-        `<strong>IMC: ${imc}</strong><br><span style="color:#60a5fa">${status}</span>`;
+      let status = imc < 18.5 ? "Bajo peso" : imc < 25 ? "Normal" : imc < 30 ? "Sobrepeso" : "Obesidad";
+      
+      document.getElementById('imc-result').innerHTML = `<strong>IMC: ${imc}</strong><br><span>${status}</span>`;
     }
   </script>
 </body>
