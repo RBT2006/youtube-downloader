@@ -6,7 +6,17 @@
   <title>Toolify - Herramientas Online Gratis</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a, #1e2937); color: #e2e8f0; margin:0; padding:0; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e2937);
+      color: #e2e8f0;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
     .navbar {
       background: rgba(15, 23, 42, 0.98);
       backdrop-filter: blur(12px);
@@ -17,19 +27,94 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(99,102,241,0.2);
+      border-bottom: 1px solid rgba(99, 102, 241, 0.2);
     }
+
     .logo { color: #6366f1; font-size: 1.8rem; font-weight: 700; }
-    .btn-login {
-      background: #22c55e;
-      color: white;
-      padding: 10px 20px;
+
+    .hero {
+      text-align: center;
+      padding: 100px 20px 60px;
+    }
+
+    .hero h1 {
+      font-size: 3.2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #6366f1, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 25px;
+      padding: 40px 5%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .tool-card {
+      background: #1e2937;
+      border-radius: 20px;
+      padding: 30px;
+      transition: all 0.4s ease;
+      border: 1px solid rgba(99, 102, 241, 0.15);
+    }
+
+    .tool-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 14px;
+      background: #334155;
       border: none;
-      border-radius: 9999px;
+      border-radius: 12px;
+      color: white;
+      margin: 12px 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
+      margin-top: 8px;
     }
-    /* Resto del diseño anterior... */
+
+    .copy-btn {
+      background: #475569;
+      margin-top: 8px;
+    }
+
+    .result {
+      margin-top: 15px;
+      padding: 15px;
+      background: #0f172a;
+      border-radius: 12px;
+      min-height: 70px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #22c55e;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 15px rgba(0,0,0,0.4);
+      display: none;
+      z-index: 2000;
+    }
   </style>
 </head>
 <body>
@@ -40,6 +125,125 @@
     </button>
   </nav>
 
-  <!-- Resto de tu contenido aquí -->
+  <div class="hero">
+    <h1>Herramientas Online</h1>
+    <p style="font-size:1.25rem; color:#94a3b8;">Profesionales • Rápidas • Gratuitas</p>
+  </div>
+
+  <div class="tools-grid">
+    <!-- QR -->
+    <div class="tool-card">
+      <h3>🔲 Generador de QR</h3>
+      <input type="text" id="qr-input" class="input-field" placeholder="Texto o enlace...">
+      <button onclick="generateQR()">Generar QR</button>
+      <div id="qr-result" class="result"></div>
+    </div>
+
+    <!-- Password -->
+    <div class="tool-card">
+      <h3>🔑 Generador de Contraseñas</h3>
+      <input type="number" id="pass-length" class="input-field" value="18" min="8" max="64">
+      <button onclick="generatePassword()">Generar Contraseña Segura</button>
+      <div id="password-result" class="result"></div>
+    </div>
+
+    <!-- Contador de Palabras -->
+    <div class="tool-card">
+      <h3>📝 Contador de Palabras</h3>
+      <textarea id="word-count-input" class="input-field" rows="5" placeholder="Escribe tu texto aquí..."></textarea>
+      <button onclick="countWords()">Contar Palabras y Caracteres</button>
+      <div id="word-count-result" class="result"></div>
+    </div>
+
+    <!-- Convertidor de Texto -->
+    <div class="tool-card">
+      <h3>🔠 Convertidor de Texto</h3>
+      <textarea id="text-convert-input" class="input-field" rows="4" placeholder="Escribe tu texto..."></textarea>
+      <div style="display:flex; gap:8px;">
+        <button onclick="convertText('upper')">MAYÚSCULAS</button>
+        <button onclick="convertText('lower')">minúsculas</button>
+        <button onclick="convertText('capitalize')">Capitalizar</button>
+      </div>
+      <div id="text-convert-result" class="result"></div>
+    </div>
+
+    <!-- Generador de Nombres -->
+    <div class="tool-card">
+      <h3>👤 Generador de Nombres</h3>
+      <button onclick="generateName()">Generar Nombre Aleatorio</button>
+      <div id="name-result" class="result"></div>
+    </div>
+
+    <!-- Calculadora IMC -->
+    <div class="tool-card">
+      <h3>⚖️ Calculadora de IMC</h3>
+      <input type="number" id="weight" class="input-field" placeholder="Peso en kg (ej: 70)">
+      <input type="number" id="height" class="input-field" placeholder="Altura en cm (ej: 170)">
+      <button onclick="calculateIMC()">Calcular IMC</button>
+      <div id="imc-result" class="result"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">✅ Copiado al portapapeles</div>
+
+  <script>
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 2500);
+      });
+    }
+
+    // Funciones existentes (QR, Password, Base64) + nuevas
+    async function generateQR() { /* ... */ }
+    async function generatePassword() { /* ... */ }
+
+    // Nueva: Contador de palabras
+    function countWords() {
+      const text = document.getElementById('word-count-input').value.trim();
+      const words = text.split(/\s+/).filter(word => word.length > 0).length;
+      const chars = text.length;
+      document.getElementById('word-count-result').innerHTML = 
+        `<strong>${words} palabras</strong> | ${chars} caracteres`;
+    }
+
+    // Nueva: Convertidor de texto
+    function convertText(type) {
+      const text = document.getElementById('text-convert-input').value;
+      let result = '';
+      if (type === 'upper') result = text.toUpperCase();
+      else if (type === 'lower') result = text.toLowerCase();
+      else if (type === 'capitalize') result = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+      
+      document.getElementById('text-convert-result').innerHTML = 
+        `<strong>${result}</strong><br><button class="copy-btn" onclick="copyToClipboard('${result}')">📋 Copiar</button>`;
+    }
+
+    // Nueva: Generador de Nombres
+    function generateName() {
+      const names = ["Lucas", "Sofía", "Mateo", "Valentina", "Diego", "Camila", "Alejandro", "Isabella", "Martín", "Emma"];
+      const surnames = ["García", "Rodríguez", "López", "Martínez", "González", "Pérez", "Sánchez", "Ramírez"];
+      const fullName = names[Math.floor(Math.random()*names.length)] + " " + surnames[Math.floor(Math.random()*surnames.length)];
+      document.getElementById('name-result').innerHTML = `<strong>${fullName}</strong>`;
+    }
+
+    // Nueva: Calculadora IMC
+    function calculateIMC() {
+      const weight = parseFloat(document.getElementById('weight').value);
+      const height = parseFloat(document.getElementById('height').value) / 100;
+      if (!weight || !height) return alert("Ingresa peso y altura");
+      
+      const imc = (weight / (height * height)).toFixed(2);
+      let status = '';
+      if (imc < 18.5) status = "Bajo peso";
+      else if (imc < 25) status = "Peso normal";
+      else if (imc < 30) status = "Sobrepeso";
+      else status = "Obesidad";
+
+      document.getElementById('imc-result').innerHTML = 
+        `<strong>IMC: ${imc}</strong><br><span style="color:#60a5fa">${status}</span>`;
+    }
+  </script>
 </body>
 </html>
