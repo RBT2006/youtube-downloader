@@ -1,55 +1,175 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Downloader</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Downloader - Descarga Rápida</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e3a8a);
+      color: white;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: 40px auto;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.8rem;
+      margin-bottom: 10px;
+      background: linear-gradient(to right, #3b82f6, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+
+    input {
+      width: 100%;
+      padding: 18px 20px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 12px;
+      background: #1e2937;
+      color: white;
+      margin-bottom: 25px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 16px 32px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-video {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-audio {
+      background: #22c55e;
+      color: white;
+    }
+
+    .btn-clear {
+      background: #ef4444;
+      color: white;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    #status {
+      margin-top: 25px;
+      text-align: center;
+      font-weight: 500;
+      min-height: 28px;
+    }
+
+    .success { color: #22c55e; }
+    .error { color: #ef4444; }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>🎥 YT Downloader</h1>
+    <p>Descarga videos de YouTube en MP4 y MP3 gratis</p>
 
-<div class="container">
+    <input type="text" id="url" placeholder="Pega aquí el enlace de YouTube...">
 
-    <div class="card">
-
-        <h1>Downloader</h1>
-        <p class="subtitle">Descarga videos MP4 o audio MP3 fácilmente</p>
-
-        <div class="input-group">
-            <input
-                type="text"
-                id="youtube-url"
-                placeholder="Pega aquí el enlace de YouTube"
-            >
-        </div>
-
-        <div class="buttons">
-            <button class="download-video" onclick="downloadFile('video')">
-                Descargar Video
-            </button>
-
-            <button class="download-audio" onclick="downloadFile('audio')">
-                Descargar Audio MP3
-            </button>
-        </div>
-
-        <button class="clear-btn" onclick="clearInput()">
-            Limpiar
-        </button>
-
-        <div id="loading" class="loading hidden">
-            <div class="spinner"></div>
-            <p>Procesando descarga...</p>
-        </div>
-
-        <div id="message"></div>
-
+    <div class="buttons">
+      <button class="btn-video" onclick="download('video')">📹 Descargar Video</button>
+      <button class="btn-audio" onclick="download('audio')">🎵 Descargar MP3</button>
     </div>
 
-</div>
+    <button class="btn-clear" onclick="clearInput()">🗑️ Limpiar</button>
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+    <div id="status"></div>
+  </div>
 
+  <script>
+    async function download(type) {
+      const urlInput = document.getElementById('url');
+      const status = document.getElementById('status');
+      const url = urlInput.value.trim();
+
+      if (!url) {
+        status.innerHTML = `<span class="error">❌ Ingresa un enlace de YouTube</span>`;
+        return;
+      }
+
+      status.innerHTML = `<span style="color:#eab308">⏳ Procesando, espera por favor...</span>`;
+
+      try {
+        const res = await fetch('/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url, format: type })
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = type === 'audio' ? 'audio.mp3' : 'video.mp4';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          status.innerHTML = `<span class="success">✅ ¡Descarga iniciada con éxito!</span>`;
+        } else {
+          const data = await res.json();
+          status.innerHTML = `<span class="error">❌ ${data.error || 'Error al descargar'}</span>`;
+        }
+      } catch (err) {
+        status.innerHTML = `<span class="error">❌ Error de conexión. Inténtalo de nuevo.</span>`;
+      }
+    }
+
+    function clearInput() {
+      document.getElementById('url').value = '';
+      document.getElementById('status').innerHTML = '';
+    }
+  </script>
 </body>
 </html>
