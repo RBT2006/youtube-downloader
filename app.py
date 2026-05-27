@@ -2,6 +2,7 @@ from flask import Flask, request, send_file, jsonify, render_template
 import yt_dlp
 import os
 import uuid
+from datetime import datetime
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
@@ -16,9 +17,10 @@ def index():
 def download():
     url = request.json.get('url')
     format_type = request.json.get('format', 'video')
+    quality = request.json.get('quality', '720')
 
     if not url:
-        return jsonify({"error": "Por favor ingresa una URL"}), 400
+        return jsonify({"error": "Ingresa una URL de YouTube"}), 400
 
     try:
         unique_id = str(uuid.uuid4())
@@ -28,20 +30,28 @@ def download():
             'outtmpl': f'{output_path}.%(ext)s',
             'quiet': True,
             'no_warnings': True,
+            'retries': 5,
+            'fragment_retries': 5,
+            'extractor_retries': 5,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36',
+                'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
+            },
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios', 'web', 'android'],
-                    'skip_hls': True
+                    'player_client': ['ios', 'web', 'android', 'web_embedded', 'ios_music'],
+                    'skip_hls': True,
+                    'po_token': True
                 }
-            },
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
-            },
-            'format': 'best[height<=720]' if format_type == 'video' else 'bestaudio/best',
+            }
         }
 
-        if format_type == 'audio':
+        # Calidad
+        if format_type == 'video':
+            ydl_opts['format'] = f'best[height<={quality}]/best'
+        else:
             ydl_opts.update({
+                'format': 'bestaudio/best',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
@@ -59,10 +69,12 @@ def download():
         return send_file(filename, as_attachment=True, download_name=os.path.basename(filename))
 
     except Exception as e:
-        error_msg = str(e)
-        if "Sign in" in error_msg or "confirm" in error_msg:
-            error_msg = "YouTube requiere verificación. Prueba con otro video o más tarde."
-        return jsonify({"error": error_msg}), 500
+        error = str(e).lower()
+        if any(x in error for x in ["confirm", "sign in", "bot", "cookie"]):
+            msg = "YouTube está bloqueando temporalmente. Prueba con otro video o espera 10 minutos."
+        else:
+            msg = "Error al descargar. Inténtalo de nuevo."
+        return jsonify({"error": msg}), 500
 
 
 if __name__ == '__main__':
