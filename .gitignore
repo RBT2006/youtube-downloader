@@ -1,0 +1,7 @@
+# Archivos grandes
+downloads/
+ffmpeg/
+*.mp4
+*.exe
+__pycache__/
+*.pyc

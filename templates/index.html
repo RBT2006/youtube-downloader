@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloader</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>Downloader</h1>
+        <p class="subtitle">Descarga videos MP4 o audio MP3 fácilmente</p>
+
+        <div class="input-group">
+            <input
+                type="text"
+                id="youtube-url"
+                placeholder="Pega aquí el enlace de YouTube"
+            >
+        </div>
+
+        <div class="buttons">
+            <button class="download-video" onclick="downloadFile('video')">
+                Descargar Video
+            </button>
+
+            <button class="download-audio" onclick="downloadFile('audio')">
+                Descargar Audio MP3
+            </button>
+        </div>
+
+        <button class="clear-btn" onclick="clearInput()">
+            Limpiar
+        </button>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Procesando descarga...</p>
+        </div>
+
+        <div id="message"></div>
+
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
