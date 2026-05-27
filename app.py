@@ -28,10 +28,10 @@ def download():
         output_path = f"{DOWNLOAD_FOLDER}/{unique_id}"
 
         ydl_opts = {
-            'outtmpl': f'{output_path}.%(ext)s',
-            'quiet': True,
-        }
-
+    'outtmpl': f'{output_path}.%(ext)s',
+    'quiet': True,
+    'cookiesfrombrowser': 'chrome',   # ← Agrega esta línea
+}
         if format_type == 'audio':
             ydl_opts.update({
                 'format': 'bestaudio/best',
