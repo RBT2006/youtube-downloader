@@ -27,7 +27,7 @@ def download():
         ydl_opts = {
             'outtmpl': f'{output_path}.%(ext)s',
             'quiet': True,
-            'cookiesfrombrowser': 'chrome',     # ← Esta es la clave
+            'cookiesfrombrowser': ('chrome', None, None, None),   # ← Corrección aquí
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
@@ -39,6 +39,7 @@ def download():
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
+                    'preferredquality': '192',
                 }],
             })
         else:
@@ -47,6 +48,7 @@ def download():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
+            
             if format_type == 'audio':
                 filename = filename.replace('.webm', '.mp3').replace('.mp4', '.mp3')
 
