@@ -18,7 +18,7 @@ def download():
     format_type = request.json.get('format', 'video')
 
     if not url:
-        return jsonify({"error": "URL inválida"}), 400
+        return jsonify({"error": "Por favor ingresa una URL"}), 400
 
     try:
         unique_id = str(uuid.uuid4())
@@ -27,23 +27,27 @@ def download():
         ydl_opts = {
             'outtmpl': f'{output_path}.%(ext)s',
             'quiet': True,
+            'no_warnings': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'web', 'android'],
+                    'skip_hls': True
+                }
+            },
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
             },
-            'extractor_args': {'youtube': {'player_client': ['ios', 'web']}},   # Mejor opción actual
+            'format': 'best[height<=720]' if format_type == 'video' else 'bestaudio/best',
         }
 
         if format_type == 'audio':
             ydl_opts.update({
-                'format': 'bestaudio/best',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
                     'preferredquality': '192',
                 }],
             })
-        else:
-            ydl_opts['format'] = 'best[height<=720]'
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -52,10 +56,13 @@ def download():
             if format_type == 'audio':
                 filename = filename.replace('.webm', '.mp3').replace('.mp4', '.mp3')
 
-        return send_file(filename, as_attachment=True)
+        return send_file(filename, as_attachment=True, download_name=os.path.basename(filename))
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        error_msg = str(e)
+        if "Sign in" in error_msg or "confirm" in error_msg:
+            error_msg = "YouTube requiere verificación. Prueba con otro video o más tarde."
+        return jsonify({"error": error_msg}), 500
 
 
 if __name__ == '__main__':
